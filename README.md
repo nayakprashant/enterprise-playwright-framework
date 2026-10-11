@@ -52,26 +52,37 @@ TEST_ENV=ci npx playwright test
 
 Page objects are located in the `pages/` folder and contain only locators for application pages:
 
-- **LoginPage.ts** - Example page object for login functionality
+- **PlaywrightDevPage.ts** - Page object for Playwright documentation website
 
 ### Creating a New Page Object
 
 1. Create a new file in the `pages/` folder
 2. Create a class that accepts a `Page` object in the constructor
-3. Define locators as public properties
+3. Define locators as readonly properties and initialize them in the constructor
+4. Add a public getter for the page object if needed for assertions
 
 Example:
 
 ```typescript
-import { Page } from '@playwright/test';
+import { Page, Locator } from '@playwright/test';
 
 export class HomePage {
-  constructor(private page: Page) {}
+  // Locators
+  readonly searchInput: Locator;
+  readonly searchButton: Locator;
 
-  searchInput = this.page.locator('#search');
-  searchButton = this.page.locator('button[type="submit"]');
+  constructor(private _page: Page) {
+    this.searchInput = this._page.locator('#search');
+    this.searchButton = this._page.locator('button[type="submit"]');
+  }
+
+  get page() {
+    return this._page;
+  }
 }
 ```
+
+**Note:** Locators are accessed as `objectName.memberName` from test files (e.g., `homePage.searchInput`).
 
 ## Helpers
 
@@ -91,6 +102,8 @@ These provide lightweight wrappers around common Playwright interactions:
 - `hover(locator, timeout?)` - Hover over element
 - `check(locator, timeout?)` - Check a checkbox
 - `uncheck(locator, timeout?)` - Uncheck a checkbox
+
+**Logging:** All helper functions include automatic logging that outputs the locator information and relevant parameters to the console for debugging purposes.
 
 ### Timeout Override
 
@@ -112,23 +125,23 @@ Tests are located in the `tests/` folder and should:
 2. Import helper functions for interactions
 3. Focus on business scenarios and assertions
 4. Avoid hardcoding environment-specific values
+5. Access locators as `objectName.memberName` from page objects
 
 Example:
 
 ```typescript
 import { test, expect } from '@playwright/test';
-import { LoginPage } from '../pages/LoginPage';
-import { click, fill } from '../helpers/genericHelper';
+import { PlaywrightDevPage } from '../pages/PlaywrightDevPage';
+import { click, isVisible } from '../helpers/genericHelper';
 
-test('should login with valid credentials', async ({ page }) => {
-  const loginPage = new LoginPage(page);
-  await page.goto('/login');
-  
-  await fill(loginPage.usernameInput, 'testuser@example.com');
-  await fill(loginPage.passwordInput, 'password123');
-  await click(loginPage.loginButton);
-  
-  await expect(page).toHaveURL('/dashboard');
+test('should navigate to docs', async ({ page }) => {
+  const playwrightDevPage = new PlaywrightDevPage(page);
+  await page.goto('/');
+
+  await expect(await isVisible(playwrightDevPage.docsLink)).toBe(true);
+  await click(playwrightDevPage.docsLink);
+
+  await expect(page).toHaveURL(/.*docs/);
 });
 ```
 
@@ -145,7 +158,7 @@ npx playwright test --ui
 npx playwright test --debug
 
 # Run specific test file
-npx playwright test login.spec.ts
+npx playwright test playwright-dev.spec.ts
 
 # Run tests on specific browser
 npx playwright test --project=chromium
@@ -193,6 +206,8 @@ const environments: Record<string, EnvironmentConfig> = {
 - **No hardcoding**: Environment-specific values are in configuration files
 - **TypeScript best practices**: Strong typing throughout the framework
 - **Page objects as locators**: Page objects contain only locators, not action methods
+- **Automatic logging**: Helper functions include console logging for debugging and traceability
+- **Consistent pattern**: Locators accessed as `objectName.memberName` for uniform usage
 
 ## Future Enhancements
 
