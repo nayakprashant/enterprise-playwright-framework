@@ -12,6 +12,9 @@ enterprise-playwright-framework/
 ├── pages/           # Page objects representing application pages
 ├── helpers/         # Generic helper functions for Playwright interactions
 ├── tests/           # Test files
+├── test-data/       # Test data files (CSV, JSON, etc.)
+├── ai_prompts/      # AI prompt templates for test generation
+├── .gitignore       # Git ignore file
 └── playwright.config.ts  # Playwright configuration
 ```
 
@@ -53,6 +56,7 @@ TEST_ENV=ci npx playwright test
 Page objects are located in the `pages/` folder and contain only locators for application pages:
 
 - **PlaywrightDevPage.ts** - Page object for Playwright documentation website
+- **KatalonCmsPage.ts** - Page object for Katalon CMS demo site
 
 ### Creating a New Page Object
 
@@ -105,6 +109,31 @@ These provide lightweight wrappers around common Playwright interactions:
 
 **Logging:** All helper functions include automatic logging that outputs the locator information and relevant parameters to the console for debugging purposes.
 
+### CSV Reader Helper
+
+The framework includes a CSV reader helper located in `helpers/csvReader.ts` for reading test data from CSV files:
+
+- `csvRead(testIdentifier, testdataFilePath)` - Reads test data from a CSV file based on a test identifier
+  - Returns an array of values from the matching row (excluding the test identifier)
+  - First column should contain the test identifier
+  - Remaining columns contain the test data values
+
+Example CSV format:
+```csv
+testIdentifier,username,password,expectedUserName
+abc101,customer,password123,hazela1
+```
+
+Usage in tests:
+```typescript
+import { csvRead } from '../helpers/csvReader';
+
+const testData = csvRead('abc101', './test-data/data.csv');
+const username = testData[0];
+const password = testData[1];
+const expectedUserName = testData[2];
+```
+
 ### Timeout Override
 
 All helper functions accept an optional `timeout` parameter:
@@ -126,6 +155,43 @@ Tests are located in the `tests/` folder and should:
 3. Focus on business scenarios and assertions
 4. Avoid hardcoding environment-specific values
 5. Access locators as `objectName.memberName` from page objects
+6. Use test hooks for setup and teardown operations
+
+### Test Hooks
+
+Playwright supports the following test hooks:
+
+- `test.beforeAll()` - Runs once before all tests in the describe block
+- `test.afterAll()` - Runs once after all tests in the describe block
+- `test.beforeEach()` - Runs before each test
+- `test.afterEach()` - Runs after each test
+
+Example:
+```typescript
+test.describe('Test Suite', () => {
+  test.beforeAll(async () => {
+    console.log('Inside beforeAll hook');
+  });
+
+  test.afterAll(async () => {
+    console.log('Inside afterAll hook');
+  });
+
+  test.beforeEach(async ({ page }) => {
+    console.log('Inside beforeEach hook');
+    // Setup before each test
+  });
+
+  test.afterEach(async () => {
+    console.log('Inside afterEach hook');
+    // Cleanup after each test
+  });
+
+  test('example test', async ({ page }) => {
+    // Test implementation
+  });
+});
+```
 
 Example:
 
@@ -145,6 +211,38 @@ test('should navigate to docs', async ({ page }) => {
 });
 ```
 
+### Using Test Data from CSV
+
+Tests can read data from CSV files using the csvReader helper:
+
+```typescript
+import { test, expect } from '@playwright/test';
+import { KatalonCmsPage } from '../pages/KatalonCmsPage';
+import { click, fill, getText, isVisible, waitForVisible } from '../helpers/genericHelper';
+import { csvRead } from '../helpers/csvReader';
+
+test.describe('Login Tests', () => {
+  const testIdentifier = 'abc101';
+  const testData = csvRead(testIdentifier, './test-data/data.csv');
+
+  const USERNAME = testData[0];
+  const PASSWORD = testData[1];
+  const EXPECTED_USER_NAME = testData[2];
+
+  test('should login successfully', async ({ page }) => {
+    const katalonCmsPage = new KatalonCmsPage(page);
+    await page.goto('https://example.com/login');
+
+    await fill(katalonCmsPage.usernameInput, USERNAME);
+    await fill(katalonCmsPage.passwordInput, PASSWORD);
+    await click(katalonCmsPage.loginButton);
+
+    const actualUserName = await getText(katalonCmsPage.userName);
+    expect(actualUserName).toBe(EXPECTED_USER_NAME);
+  });
+});
+```
+
 ## Running Tests
 
 ```bash
@@ -159,6 +257,7 @@ npx playwright test --debug
 
 # Run specific test file
 npx playwright test playwright-dev.spec.ts
+npx playwright test katalon-cms-login.spec.ts
 
 # Run tests on specific browser
 npx playwright test --project=chromium
@@ -208,6 +307,23 @@ const environments: Record<string, EnvironmentConfig> = {
 - **Page objects as locators**: Page objects contain only locators, not action methods
 - **Automatic logging**: Helper functions include console logging for debugging and traceability
 - **Consistent pattern**: Locators accessed as `objectName.memberName` for uniform usage
+- **Test data externalization**: Test data stored in external files (CSV) rather than hardcoded
+- **Test hooks**: Proper use of beforeAll, afterAll, beforeEach, afterEach for setup and teardown
+
+## Test Data Management
+
+Test data files are stored in the `test-data/` folder. The framework supports CSV files for test data management:
+
+- **data.csv** - Contains test data with identifiers for easy lookup
+- CSV format: First column is the test identifier, remaining columns are data values
+- Use the `csvRead` helper to retrieve data based on test identifier
+
+## AI Prompts
+
+AI prompt templates are stored in the `ai_prompts/` folder for generating tests using AI assistants:
+
+- **1.0.2.md** - Template for automating login flow with existing framework
+- Prompts include detailed instructions for framework inspection, test implementation, and validation
 
 ## Future Enhancements
 
@@ -218,5 +334,5 @@ The framework is designed to accommodate future features:
 - Custom test execution strategies
 - Enhanced reporting
 - AI-powered test generation
-- Test data management
+- Test data management (additional formats: JSON, YAML)
 - Parallel execution strategies

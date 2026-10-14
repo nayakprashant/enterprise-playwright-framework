@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { KatalonCmsPage } from '../pages/KatalonCmsPage';
 import { click, fill, getText, isVisible, waitForVisible } from '../helpers/genericHelper';
+import { csvRead } from '../helpers/csvReader';
 
 /**
  * Katalon CMS Login Test Suite
@@ -8,15 +9,33 @@ import { click, fill, getText, isVisible, waitForVisible } from '../helpers/gene
  */
 
 test.describe('Katalon CMS Login Tests', () => {
+
+  const testIdentifier = 'abc101';
   let katalonCmsPage: KatalonCmsPage;
 
-  // Test credentials - kept local to test file per framework conventions
-  const USERNAME = 'customer';
-  const PASSWORD = '123456'; // This should be replaced with actual password when available
-  const EXPECTED_USER_NAME = 'hazela1';
+  // Read test data from CSV file
+  const testData = csvRead(testIdentifier, './test-data/data.csv');
+
+  // Test credentials from CSV
+  const USERNAME = testData[0];
+  const PASSWORD = testData[1];
+  const EXPECTED_USER_NAME = testData[2];
+
+  test.beforeAll(async () => {
+    console.log('Inside beforeAll hook');
+  });
+
+  test.afterAll(async () => {
+    console.log('Inside afterAll hook');
+  });
 
   test.beforeEach(async ({ page }) => {
+    console.log('Inside beforeEach hook');
     katalonCmsPage = new KatalonCmsPage(page);
+  });
+
+  test.afterEach(async () => {
+    console.log('Inside afterEach hook');
   });
 
   test('should login successfully with valid credentials', async ({ page }) => {
