@@ -1,0 +1,24 @@
+import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+    
+  await page.goto('https://cms.demo.katalon.com/');
+    // Page: HomePage
+    // Action: Click on My Account link
+  await page.getByRole('link', { name: 'My account' }).click();
+    // Page: LoginPage
+    // Action: Click on username and enter the username
+  await page.getByRole('textbox', { name: 'Username or email address *' }).click();
+  await page.getByRole('textbox', { name: 'Username or email address *' }).fill('customer');
+    // Page: LoginPage
+    // Action: Click on password and enter the password
+    await page.getByRole('textbox', { name: 'Password *' }).click();
+  await page.getByRole('textbox', { name: 'Password *' }).fill('crz7mrb.KNG3yxv1fbn01');
+    // Page: LoginPage
+    // Action: Click on the login button
+  await page.getByRole('button', { name: 'Log in' }).click();
+
+// Page: LoginPage
+    // Action: Verify that the error message is displayed
+    await expect(page.getByRole('alert')).toContainText('Error: The password you entered for the username customer is incorrect. Lost your password?');
+});
