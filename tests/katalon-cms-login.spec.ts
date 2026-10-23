@@ -40,7 +40,7 @@ test.describe('Katalon CMS Login Tests', () => {
 
   test('should login successfully with valid credentials', async ({ page }) => {
     // Step 1: Navigate to the application
-    await page.goto('https://cms.demo.katalon.com/');
+    await page.goto('/');
 
     // Step 2: Click the My Account link
     await click(katalonCmsPage.myAccountLink);
