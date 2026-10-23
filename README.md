@@ -323,7 +323,102 @@ Test data files are stored in the `test-data/` folder. The framework supports CS
 AI prompt templates are stored in the `ai_prompts/` folder for generating tests using AI assistants:
 
 - **1.0.2.md** - Template for automating login flow with existing framework
+- **1.0.3.md** - Template for automating test cases using enhanced codegen steps and existing framework
 - Prompts include detailed instructions for framework inspection, test implementation, and validation
+
+### Using the 1.0.3.md Prompt
+
+The 1.0.3.md prompt is designed to automate test cases using manual test case Excel files and Playwright codegen recorded steps. It intelligently reuses the existing framework structure and conventions.
+
+#### Preparation Steps
+
+Before using the 1.0.3.md prompt, ensure you have the following prepared:
+
+1. **Manual Test Case Excel File**
+   - Create or obtain an Excel file containing the manual test case
+   - The file should include: step numbers, descriptions, expected results, and locator information (if available)
+   - Place this file in the appropriate test case folder (e.g., `test-cases/01-login-incorrect-password-check/Manual Test Case.xlsx`)
+
+2. **Enhanced Codegen Steps**
+   - Run Playwright codegen to record the test steps:
+     ```bash
+     npx playwright codegen https://your-application-url.com/
+     ```
+   - Save the generated code to a text file (e.g., `codegen.txt`)
+   - Optionally enhance the codegen with comments for clarity (the prompt can work with or without comments)
+   - Place this file in the same folder as the Excel file
+
+3. **Configuration Setup**
+   - Ensure the `baseUrl` in the appropriate environment config file (e.g., `config/qa.env.ts`) is set to your application URL
+   - Verify that timeout values are appropriate for your application
+
+4. **Test Data (Optional)**
+   - If your test requires test data (username, password, etc.), prepare a CSV file in the `test-data/` folder
+   - Format: `testIdentifier,column1,column2,...`
+   - Example:
+     ```csv
+     abc101,customer,password123
+     abc102,customer,incorrectPassword
+     ```
+
+5. **Page Object Check**
+   - The prompt will automatically check for existing page objects in the `pages/` folder
+   - If a page object exists, it will reuse it and add new locators if needed
+   - If a page object doesn't exist, it will create one following the framework's pattern
+
+#### Using the Prompt
+
+1. Provide the AI assistant with:
+   - The 1.0.3.md prompt content
+   - The path to your manual test case Excel file
+   - The path to your codegen.txt file
+
+2. The AI will:
+   - Inspect the existing framework structure
+   - Identify existing page objects and their locators
+   - Add new locators to existing page objects or create new ones as needed
+   - Create a test file following the framework's conventions
+   - Use helper functions from `genericHelper.ts`
+   - Implement appropriate assertions
+   - Follow the exact selectors from the codegen steps
+
+3. After implementation:
+   - Review the generated test file
+   - Run the test to verify it works
+   - If selectors from codegen don't work, the AI will report the failure (per prompt requirements)
+   - Update configuration or test data as needed
+
+#### Example Workflow
+
+```bash
+# 1. Create test case folder
+mkdir -p test-cases/01-login-incorrect-password-check
+
+# 2. Record test steps with codegen
+npx playwright codegen https://cms.demo.katalon.com/
+
+# 3. Save the generated code to codegen.txt in the test case folder
+
+# 4. Place your Manual Test Case.xlsx in the same folder
+
+# 5. If needed, add test data to test-data/data.csv
+echo "abc102,customer,incorrectPassword" >> test-data/data.csv
+
+# 6. Provide the prompt, Excel file, and codegen.txt to the AI assistant
+
+# 7. Run the generated test
+npx playwright test tests/katalon-cms-login-incorrect-password.spec.ts
+```
+
+#### Key Features of 1.0.3.md Prompt
+
+- **Framework Awareness**: Inspects and reuses existing framework structure
+- **Page Object Management**: Intelligently reuses existing page objects or creates new ones
+- **Locator Accuracy**: Uses exact selectors from codegen (reports failures if they don't work)
+- **Helper Function Integration**: Uses framework's helper functions for interactions
+- **Test Data Support**: Can read test data from CSV files
+- **Configuration Integration**: Uses framework's configuration system
+- **Consistent Patterns**: Follows the framework's coding conventions and test structure
 
 ## Future Enhancements
 
