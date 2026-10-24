@@ -13,6 +13,7 @@ enterprise-playwright-framework/
 ├── helpers/         # Generic helper functions for Playwright interactions
 ├── tests/           # Test files
 ├── test-data/       # Test data files (CSV, JSON, etc.)
+├── test-cases/      # Manual test cases and codegen files for AI-assisted test generation
 ├── ai_prompts/      # AI prompt templates for test generation
 ├── .gitignore       # Git ignore file
 └── playwright.config.ts  # Playwright configuration
@@ -55,7 +56,6 @@ TEST_ENV=ci npx playwright test
 
 Page objects are located in the `pages/` folder and contain only locators for application pages:
 
-- **PlaywrightDevPage.ts** - Page object for Playwright documentation website
 - **KatalonCmsPage.ts** - Page object for Katalon CMS demo site
 
 ### Creating a New Page Object
@@ -64,6 +64,7 @@ Page objects are located in the `pages/` folder and contain only locators for ap
 2. Create a class that accepts a `Page` object in the constructor
 3. Define locators as readonly properties and initialize them in the constructor
 4. Add a public getter for the page object if needed for assertions
+5. Prefer role-based locators (e.g., `getByRole`) over XPath/CSS selectors for better maintainability
 
 Example:
 
@@ -76,8 +77,9 @@ export class HomePage {
   readonly searchButton: Locator;
 
   constructor(private _page: Page) {
-    this.searchInput = this._page.locator('#search');
-    this.searchButton = this._page.locator('button[type="submit"]');
+    // Prefer role-based locators for better maintainability
+    this.searchInput = this._page.getByRole('textbox', { name: 'Search' });
+    this.searchButton = this._page.getByRole('button', { name: 'Search' });
   }
 
   get page() {
@@ -121,7 +123,8 @@ The framework includes a CSV reader helper located in `helpers/csvReader.ts` for
 Example CSV format:
 ```csv
 testIdentifier,username,password,expectedUserName
-abc101,customer,password123,hazela1
+abc101,customer,crz7mrb.KNG3yxv1fbn,hazela1
+abc102,customer,crz7mrb.KNG3yxv1fbn01
 ```
 
 Usage in tests:
@@ -197,17 +200,17 @@ Example:
 
 ```typescript
 import { test, expect } from '@playwright/test';
-import { PlaywrightDevPage } from '../pages/PlaywrightDevPage';
+import { KatalonCmsPage } from '../pages/KatalonCmsPage';
 import { click, isVisible } from '../helpers/genericHelper';
 
-test('should navigate to docs', async ({ page }) => {
-  const playwrightDevPage = new PlaywrightDevPage(page);
+test('should navigate to my account', async ({ page }) => {
+  const katalonCmsPage = new KatalonCmsPage(page);
   await page.goto('/');
 
-  await expect(await isVisible(playwrightDevPage.docsLink)).toBe(true);
-  await click(playwrightDevPage.docsLink);
+  await expect(await isVisible(katalonCmsPage.myAccountLinkRole)).toBe(true);
+  await click(katalonCmsPage.myAccountLinkRole);
 
-  await expect(page).toHaveURL(/.*docs/);
+  await expect(page).toHaveURL(/.*my-account/);
 });
 ```
 
@@ -231,11 +234,11 @@ test.describe('Login Tests', () => {
 
   test('should login successfully', async ({ page }) => {
     const katalonCmsPage = new KatalonCmsPage(page);
-    await page.goto('https://example.com/login');
+    await page.goto('/');
 
-    await fill(katalonCmsPage.usernameInput, USERNAME);
-    await fill(katalonCmsPage.passwordInput, PASSWORD);
-    await click(katalonCmsPage.loginButton);
+    await fill(katalonCmsPage.usernameInputRole, USERNAME);
+    await fill(katalonCmsPage.passwordInputRole, PASSWORD);
+    await click(katalonCmsPage.loginButtonRole);
 
     const actualUserName = await getText(katalonCmsPage.userName);
     expect(actualUserName).toBe(EXPECTED_USER_NAME);
@@ -256,8 +259,8 @@ npx playwright test --ui
 npx playwright test --debug
 
 # Run specific test file
-npx playwright test playwright-dev.spec.ts
 npx playwright test katalon-cms-login.spec.ts
+npx playwright test katalon-cms-login-incorrect-password.spec.ts
 
 # Run tests on specific browser
 npx playwright test --project=chromium
@@ -305,6 +308,7 @@ const environments: Record<string, EnvironmentConfig> = {
 - **No hardcoding**: Environment-specific values are in configuration files
 - **TypeScript best practices**: Strong typing throughout the framework
 - **Page objects as locators**: Page objects contain only locators, not action methods
+- **Role-based locators**: Prefer role-based locators (e.g., `getByRole`) over XPath/CSS selectors for better maintainability
 - **Automatic logging**: Helper functions include console logging for debugging and traceability
 - **Consistent pattern**: Locators accessed as `objectName.memberName` for uniform usage
 - **Test data externalization**: Test data stored in external files (CSV) rather than hardcoded
@@ -318,12 +322,35 @@ Test data files are stored in the `test-data/` folder. The framework supports CS
 - CSV format: First column is the test identifier, remaining columns are data values
 - Use the `csvRead` helper to retrieve data based on test identifier
 
+## Test Cases Folder
+
+The `test-cases/` folder is used to store manual test cases and codegen files for AI-assisted test generation:
+
+- Each test case has its own folder (e.g., `01-login-incorrect-password-check/`)
+- Contains manual test case Excel files and codegen recorded steps
+- Used with the 1.0.3.md AI prompt for automated test generation
+- Example structure:
+  ```
+  test-cases/
+  └── 01-login-incorrect-password-check/
+      ├── Manual Test Case.xlsx
+      └── codegen.txt
+  ```
+
+## Current Test Suite
+
+The framework currently includes the following test suites:
+
+- **katalon-cms-login.spec.ts** - Tests for successful login with valid credentials
+- **katalon-cms-login-incorrect-password.spec.ts** - Tests for error message display with incorrect password
+
+Both test suites use the KatalonCmsPage page object with role-based locators and read test data from CSV files.
+
 ## AI Prompts
 
 AI prompt templates are stored in the `ai_prompts/` folder for generating tests using AI assistants:
 
-- **1.0.2.md** - Template for automating login flow with existing framework
-- **1.0.3.md** - Template for automating test cases using enhanced codegen steps and existing framework
+- **1.0.3.md** - Template for automating test cases using enhanced codegen steps and existing framework (recommended)
 - Prompts include detailed instructions for framework inspection, test implementation, and validation
 
 ### Using the 1.0.3.md Prompt
@@ -357,8 +384,8 @@ Before using the 1.0.3.md prompt, ensure you have the following prepared:
    - Format: `testIdentifier,column1,column2,...`
    - Example:
      ```csv
-     abc101,customer,password123
-     abc102,customer,incorrectPassword
+     abc101,customer,crz7mrb.KNG3yxv1fbn,hazela1
+     abc102,customer,crz7mrb.KNG3yxv1fbn01
      ```
 
 5. **Page Object Check**
@@ -402,7 +429,7 @@ npx playwright codegen https://cms.demo.katalon.com/
 # 4. Place your Manual Test Case.xlsx in the same folder
 
 # 5. If needed, add test data to test-data/data.csv
-echo "abc102,customer,incorrectPassword" >> test-data/data.csv
+echo "abc102,customer,crz7mrb.KNG3yxv1fbn01" >> test-data/data.csv
 
 # 6. Provide the prompt, Excel file, and codegen.txt to the AI assistant
 
