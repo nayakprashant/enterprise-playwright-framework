@@ -4,9 +4,9 @@ import { EnvironmentConfig } from './index';
  * QA Environment Configuration
  */
 export const qaConfig: EnvironmentConfig = {
-  baseUrl: 'https://playwright.dev',
+  baseUrl: 'https://cms.demo.katalon.com',
   apiUrl: 'https://api-qa.example.com',
-  defaultTimeout: 5000,
-  testTimeout: 30000,
+  defaultTimeout: 30000,
+  testTimeout: 120000,
   globalTimeout: 60000,
 };

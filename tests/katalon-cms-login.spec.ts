@@ -40,19 +40,19 @@ test.describe('Katalon CMS Login Tests', () => {
 
   test('should login successfully with valid credentials', async ({ page }) => {
     // Step 1: Navigate to the application
-    await page.goto('https://cms.demo.katalon.com/');
+    await page.goto('/');
 
     // Step 2: Click the My Account link
-    await click(katalonCmsPage.myAccountLink);
+    await click(katalonCmsPage.myAccountLinkRole);
 
     // Step 3: Enter username
-    await fill(katalonCmsPage.usernameInput, USERNAME);
+    await fill(katalonCmsPage.usernameInputRole, USERNAME);
 
     // Step 4: Enter password
-    await fill(katalonCmsPage.passwordInput, PASSWORD);
+    await fill(katalonCmsPage.passwordInputRole, PASSWORD);
 
     // Step 5: Click the Login button
-    await click(katalonCmsPage.loginButton);
+    await click(katalonCmsPage.loginButtonRole);
 
     // Step 6: Verify successful login
     // Wait for dashboard link to be visible
