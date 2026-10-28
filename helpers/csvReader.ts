@@ -13,6 +13,7 @@ import * as path from 'path';
  * @returns Array of values from the matching row (excluding the test identifier)
  */
 export function csvRead(testIdentifier: string, testdataFilePath: string): string[] {
+  console.log('csvRead called');
   // Resolve the file path relative to the project root
   const absolutePath = path.isAbsolute(testdataFilePath)
     ? testdataFilePath

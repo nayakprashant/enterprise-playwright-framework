@@ -56,6 +56,7 @@ export function loadConfig(envName: string): EnvironmentConfig {
   }
 
   currentConfig = config;
+  console.log('Config loaded:', config);
   return config;
 }
 

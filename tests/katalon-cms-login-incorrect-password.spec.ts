@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { KatalonCmsPage } from '../pages/KatalonCmsPage';
+import { HomePage } from '../pages/HomePage';
+import { CommonPage } from '../pages/CommonPage';
+import { LoginPage } from '../pages/LoginPage';
 import { click, fill, waitForVisible } from '../helpers/genericHelper';
 import { csvRead } from '../helpers/csvReader';
 
@@ -10,15 +12,9 @@ import { csvRead } from '../helpers/csvReader';
 
 test.describe('Katalon CMS Login Incorrect Password Tests', () => {
 
-  const testIdentifier = 'abc102';
-  let katalonCmsPage: KatalonCmsPage;
-
-  // Read test data from CSV file
-  const testData = csvRead(testIdentifier, './test-data/data.csv');
-
-  // Test credentials from CSV
-  const USERNAME = testData[0];
-  const PASSWORD = testData[1];
+  let homePage: HomePage;
+  let commonPage: CommonPage;
+  let loginPage: LoginPage;
 
   test.beforeAll(async () => {
     console.log('Inside beforeAll hook');
@@ -30,7 +26,9 @@ test.describe('Katalon CMS Login Incorrect Password Tests', () => {
 
   test.beforeEach(async ({ page }) => {
     console.log('Inside beforeEach hook');
-    katalonCmsPage = new KatalonCmsPage(page);
+    homePage = new HomePage(page);
+    commonPage = new CommonPage(page);
+    loginPage = new LoginPage(page);
   });
 
   test.afterEach(async () => {
@@ -38,25 +36,35 @@ test.describe('Katalon CMS Login Incorrect Password Tests', () => {
   });
 
   test('should display error message with incorrect password', async ({ page }) => {
+  
+    const testIdentifier = 'abc102';
+
+    // Read test data from CSV file
+    const testData = csvRead(testIdentifier, './test-data/data.csv');
+
+    // Test credentials from CSV
+    const USERNAME = testData[0];
+    const PASSWORD = testData[1];
+    
     // Step 1: Navigate to the application
     await page.goto('/');
 
     // Step 2: Click the My Account link
-    await click(katalonCmsPage.myAccountLinkRole);
+    await click(commonPage.myAccountLink);
 
     // Step 3: Click on username and enter the username
-    await click(katalonCmsPage.usernameInputRole);
-    await fill(katalonCmsPage.usernameInputRole, USERNAME);
+    await click(loginPage.usernameInput);
+    await fill(loginPage.usernameInput, USERNAME);
 
     // Step 4: Click on password and enter the password
-    await click(katalonCmsPage.passwordInputRole);
-    await fill(katalonCmsPage.passwordInputRole, PASSWORD);
+    await click(loginPage.passwordInput);
+    await fill(loginPage.passwordInput, PASSWORD);
 
     // Step 5: Click on the login button
-    await click(katalonCmsPage.loginButtonRole);
+    await click(loginPage.loginButton);
 
     // Step 6: Verify that the error message is displayed
-    await waitForVisible(katalonCmsPage.errorMessageAlert);
-    await expect(katalonCmsPage.errorMessageAlert).toContainText('Error: The password you entered for the username customer is incorrect. Lost your password?');
+    await waitForVisible(loginPage.errorMessageAlert);
+    await expect(loginPage.errorMessageAlert).toContainText('Error: The password you entered for the username customer is incorrect. Lost your password?');
   });
 });
