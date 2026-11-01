@@ -56,7 +56,9 @@ TEST_ENV=ci npx playwright test
 
 Page objects are located in the `pages/` folder and contain only locators for application pages:
 
-- **KatalonCmsPage.ts** - Page object for Katalon CMS demo site
+- **CommonPage.ts** - Page object for common elements shared across all pages (e.g., navigation links)
+- **LoginPage.ts** - Page object for login functionality (username, password, login button, error messages)
+- **HomePage.ts** - Page object for home/dashboard functionality
 
 ### Creating a New Page Object
 
@@ -65,6 +67,7 @@ Page objects are located in the `pages/` folder and contain only locators for ap
 3. Define locators as readonly properties and initialize them in the constructor
 4. Add a public getter for the page object if needed for assertions
 5. Prefer role-based locators (e.g., `getByRole`) over XPath/CSS selectors for better maintainability
+6. For locators shared across multiple pages, add them to `CommonPage.ts`
 
 Example:
 
@@ -200,15 +203,17 @@ Example:
 
 ```typescript
 import { test, expect } from '@playwright/test';
-import { KatalonCmsPage } from '../pages/KatalonCmsPage';
+import { HomePage } from '../pages/HomePage';
+import { CommonPage } from '../pages/CommonPage';
 import { click, isVisible } from '../helpers/genericHelper';
 
 test('should navigate to my account', async ({ page }) => {
-  const katalonCmsPage = new KatalonCmsPage(page);
+  const homePage = new HomePage(page);
+  const commonPage = new CommonPage(page);
   await page.goto('/');
 
-  await expect(await isVisible(katalonCmsPage.myAccountLinkRole)).toBe(true);
-  await click(katalonCmsPage.myAccountLinkRole);
+  await expect(await isVisible(commonPage.myAccountLink)).toBe(true);
+  await click(commonPage.myAccountLink);
 
   await expect(page).toHaveURL(/.*my-account/);
 });
@@ -220,7 +225,9 @@ Tests can read data from CSV files using the csvReader helper:
 
 ```typescript
 import { test, expect } from '@playwright/test';
-import { KatalonCmsPage } from '../pages/KatalonCmsPage';
+import { HomePage } from '../pages/HomePage';
+import { CommonPage } from '../pages/CommonPage';
+import { LoginPage } from '../pages/LoginPage';
 import { click, fill, getText, isVisible, waitForVisible } from '../helpers/genericHelper';
 import { csvRead } from '../helpers/csvReader';
 
@@ -233,14 +240,17 @@ test.describe('Login Tests', () => {
   const EXPECTED_USER_NAME = testData[2];
 
   test('should login successfully', async ({ page }) => {
-    const katalonCmsPage = new KatalonCmsPage(page);
+    const homePage = new HomePage(page);
+    const commonPage = new CommonPage(page);
+    const loginPage = new LoginPage(page);
     await page.goto('/');
 
-    await fill(katalonCmsPage.usernameInputRole, USERNAME);
-    await fill(katalonCmsPage.passwordInputRole, PASSWORD);
-    await click(katalonCmsPage.loginButtonRole);
+    await click(commonPage.myAccountLink);
+    await fill(loginPage.usernameInput, USERNAME);
+    await fill(loginPage.passwordInput, PASSWORD);
+    await click(loginPage.loginButton);
 
-    const actualUserName = await getText(katalonCmsPage.userName);
+    const actualUserName = await getText(homePage.userName);
     expect(actualUserName).toBe(EXPECTED_USER_NAME);
   });
 });
@@ -344,7 +354,7 @@ The framework currently includes the following test suites:
 - **katalon-cms-login.spec.ts** - Tests for successful login with valid credentials
 - **katalon-cms-login-incorrect-password.spec.ts** - Tests for error message display with incorrect password
 
-Both test suites use the KatalonCmsPage page object with role-based locators and read test data from CSV files.
+Both test suites use the HomePage, CommonPage, and LoginPage objects with role-based locators and read test data from CSV files.
 
 ## AI Prompts
 
