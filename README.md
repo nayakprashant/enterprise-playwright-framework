@@ -219,6 +219,37 @@ test('should navigate to my account', async ({ page }) => {
 });
 ```
 
+## Fixtures
+
+Fixtures are reusable objects that can be injected into tests to provide setup and teardown logic. They help eliminate code duplication and ensure consistent test setup across multiple tests.
+
+### Login Fixture Example
+
+The framework includes a sample fixture in `fixtures/myFixture.ts` that automates the login process. This fixture:
+- Navigates to the application
+- Fills in login credentials
+- Performs the login action
+- Provides the logged-in page to tests
+- Handles cleanup after the test
+
+### Using Fixtures
+
+```typescript
+import { test, expect } from '../fixtures/myFixture';
+
+test('verify logout link', async ({ login }) => {
+  // Test starts with logged-in state - no need to login in the test
+  // Focus only on the verification logic
+});
+```
+
+### Benefits
+
+- **Code Reuse**: Common setup logic written once, used in multiple tests
+- **Consistency**: Ensures all tests have the same setup
+- **Maintainability**: Changes to setup logic only need to be made in one place
+- **Cleaner Tests**: Tests focus on business logic, not setup details
+
 ### Using Test Data from CSV
 
 Tests can read data from CSV files using the csvReader helper:
